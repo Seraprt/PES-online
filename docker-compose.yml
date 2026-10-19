@@ -1,0 +1,25 @@
+name: pes-online-evolution
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pes_online_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pes_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pes_online}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pes} -d ${POSTGRES_DB:-pes_online}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    name: pes_online_postgres_data

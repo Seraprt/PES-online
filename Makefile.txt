@@ -1,0 +1,50 @@
+# PES Online Evolution - developer entrypoints
+# GNU Make 4+ required: recipes use .RECIPEPREFIX instead of hard tabs.
+.RECIPEPREFIX = >
+SHELL := /bin/bash
+.DEFAULT_GOAL := help
+
+.PHONY: help env up down logs reset-db psql check compose-config verify
+
+help:
+> @echo "PES Online Evolution"
+> @echo ""
+> @echo "  make env            Create .env from .env.example when missing"
+> @echo "  make up             Start PostgreSQL (detached) and show status"
+> @echo "  make down           Stop containers"
+> @echo "  make logs           Follow container logs"
+> @echo "  make reset-db       Destroy and recreate the dev database volume"
+> @echo "  make psql           Open psql in the PostgreSQL container"
+> @echo "  make check          Run architecture conformance checks"
+> @echo "  make compose-config Validate docker-compose.yml"
+> @echo "  make verify         check + compose-config"
+
+env:
+> @test -f .env || cp .env.example .env
+> @echo ".env ready"
+
+up: env
+> docker compose up -d
+> @docker compose ps
+
+down:
+> docker compose down
+
+logs:
+> docker compose logs -f --tail=100
+
+reset-db:
+> docker compose down -v
+> docker compose up -d
+
+psql:
+> docker compose exec postgres sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+
+check:
+> @python3 tools/check_architecture.py
+
+compose-config:
+> @docker compose config -q
+> @echo "docker-compose.yml is valid"
+
+verify: check compose-config
